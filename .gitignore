@@ -1,0 +1,4 @@
+*.o
+info
+mandelbrot
+*.png
