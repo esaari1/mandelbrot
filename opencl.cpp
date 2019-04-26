@@ -2,6 +2,7 @@
 #include <OpenCL/cl.h>
 #include <time.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "color.h"
 
@@ -23,25 +24,6 @@ char *readKernel(size_t &source_size) {
     return source_str;
 }
 
-// int main(int argc, char **argv) {
-//     int maxIter = 100;// 100000;
-//     int width = 1000;
-//     int height = 1000;
-//     const char *filename = "test.png";
-
-//     int c;
-
-//     while ((c = getopt(argc, argv, "m:f:")) != -1) {
-//         switch(c) {
-//             case 'm':
-//                 maxIter = atoi(optarg);
-//                 break;
-//             case 'f':
-//                 filename = optarg;
-//                 break;
-//         }
-//     }
-
 void runGPU(int width, int height, int maxIter, const char *filename) {
 	cl_uint numPlatforms = 0;
 	cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
@@ -50,10 +32,22 @@ void runGPU(int width, int height, int maxIter, const char *filename) {
 	clGetPlatformIDs(numPlatforms, platforms, NULL);
 
 	cl_uint numDevices;
-	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
+	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
 
 	cl_device_id *devices = (cl_device_id *) malloc(numDevices * sizeof(cl_device_id));
-	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, numDevices, devices, NULL);
+	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
+
+    cl_uint workItemDims;
+    clGetDeviceInfo(devices[0], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), &workItemDims, NULL);
+
+    size_t *dims = (size_t *) malloc(sizeof(size_t) * workItemDims);
+    clGetDeviceInfo(devices[0], CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t) * workItemDims, dims, NULL);
+
+    width = ceil((float) width / dims[0]) * dims[0];
+    printf("new width = %d\n", width);
+
+    height = ceil((float) height / dims[1]) * dims[1];
+    printf("new height = %d\n", height);
 
 	struct timespec start, finish;
 	clock_gettime(CLOCK_MONOTONIC, &start);
@@ -67,10 +61,10 @@ void runGPU(int width, int height, int maxIter, const char *filename) {
     unsigned int *data = (unsigned int *)malloc(LIST_SIZE);
 
     // Create an OpenCL context
-    cl_context context = clCreateContext( NULL, 1, &devices[1], NULL, NULL, &status);
+    cl_context context = clCreateContext( NULL, numDevices, devices, NULL, NULL, &status);
  
     // Create a command queue
-    cl_command_queue command_queue = clCreateCommandQueue(context, devices[1], 0, &status);
+    cl_command_queue command_queue = clCreateCommandQueue(context, devices[0], 0, &status);
  
     // Create memory buffers on the device for each vector 
     cl_mem data_mem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, LIST_SIZE, NULL, &status);
@@ -83,14 +77,14 @@ void runGPU(int width, int height, int maxIter, const char *filename) {
     }
 
     // Build the program
-    status = clBuildProgram(program, 1, &devices[1], NULL, NULL, NULL);
+    status = clBuildProgram(program, numDevices, devices, NULL, NULL, NULL);
     printf("Build status = %d\n", status);
     if (status != CL_SUCCESS) {
 		size_t length;
-		clGetProgramBuildInfo(program, devices[1], CL_PROGRAM_BUILD_LOG, 0, NULL, &length);
+		clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, 0, NULL, &length);
         char *buffer = (char *)malloc(length * sizeof(char));
 
-        clGetProgramBuildInfo(program, devices[1], CL_PROGRAM_BUILD_LOG, length, buffer, NULL);
+        clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, length, buffer, NULL);
         printf("%lu\n", length);
 		printf("LOG = %s\n", buffer);
         free(buffer);
@@ -105,16 +99,30 @@ void runGPU(int width, int height, int maxIter, const char *filename) {
     }
 
     size_t kernelSize;
-    clGetKernelWorkGroupInfo(kernel, devices[1], CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &kernelSize, NULL);
+    clGetKernelWorkGroupInfo(kernel, devices[0], CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &kernelSize, NULL);
     printf("Kernel work group size = %lu\n", kernelSize);
  
     // Set the arguments of the kernel
-    status = clSetKernelArg(kernel, 0, sizeof(int), (void *)&maxIter);
+    int argID = 0;
+    status = clSetKernelArg(kernel, argID++, sizeof(int), (void *)&width);
     printf("clSetKernelArg status = %d\n", status);
     if (status != CL_SUCCESS) {
         exit(1);
     }
-    status = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&data_mem);
+
+    status = clSetKernelArg(kernel, argID++, sizeof(int), (void *)&height);
+    printf("clSetKernelArg status = %d\n", status);
+    if (status != CL_SUCCESS) {
+        exit(1);
+    }
+
+    status = clSetKernelArg(kernel, argID++, sizeof(int), (void *)&maxIter);
+    printf("clSetKernelArg status = %d\n", status);
+    if (status != CL_SUCCESS) {
+        exit(1);
+    }
+
+    status = clSetKernelArg(kernel, argID++, sizeof(cl_mem), (void *)&data_mem);
     printf("clSetKernelArg status = %d\n", status);
     if (status != CL_SUCCESS) {
         exit(1);
@@ -123,9 +131,8 @@ void runGPU(int width, int height, int maxIter, const char *filename) {
     fflush(stdout);
  
     // Execute the OpenCL kernel on the list
-    size_t global_item_size[3] = {100, 100, 100};
-    size_t local_item_size[3] = {5, 5, 5};
-    status = clEnqueueNDRangeKernel(command_queue, kernel, 3, NULL, global_item_size, local_item_size, 0, NULL, NULL);
+    size_t local_item_size[3] = {16, 16, 1};
+    status = clEnqueueNDRangeKernel(command_queue, kernel, 3, NULL, dims, local_item_size, 0, NULL, NULL);
     printf("clEnqueueNDRangeKernel status = %d\n", status);
     if (status != CL_SUCCESS) {
     	exit(1);

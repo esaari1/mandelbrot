@@ -1,20 +1,15 @@
 __kernel void mandelbrot(
-	const int maxIter,
+	int width,
+	int height,
+	int maxIter,
 	__global unsigned int *data) {
 
-	const int width = 1000;
+    int maxY = width / get_global_size(0);
+    int x = get_global_id(0) + ((get_global_id(2) % maxY) * get_global_size(0));
+    int y = get_global_id(1) + ((get_global_id(2) / maxY) * get_global_size(0));
 
-    int a = get_global_id(0);
-    int b = get_global_id(1);
-    int c = get_global_id(2);
-
-    int idx = (c * 10000) + (b * 100) + a;
-
-    int x = a + ((b % 10) * 100);
-	int y = int(b / 10) + (c * 10);
-
-    float fourw = 4.0 / 1000.0;
-    float fourh = 4.0 / 1000.0;
+    float fourw = 4.0 / width;
+    float fourh = 4.0 / height;
 
 	float re = fourw * x - 2.0;
 	float im = fourh * y - 2.0;
@@ -30,5 +25,5 @@ __kernel void mandelbrot(
 		iter++;
 	}
 
-	data[idx] = iter;
+	data[y * width + x] = iter;
 }

@@ -13,7 +13,7 @@ void runGPU(int width, int height, int maxIter, const char *filename);
 
 int width = 1000;
 int height = 1000;
-int maxIter = 0;
+int maxIter = 100;
 int yidx = 0;
 
 void *mandelbrot(void *args) {
@@ -78,13 +78,12 @@ void runCPU(int maxIter, const char *filename) {
 }
 
 int main(int argc, char **argv) {
-    maxIter = 100;
     const char *filename = "test.png";
     bool cpu = false;
 
     int c;
 
-    while ((c = getopt(argc, argv, "m:f:c")) != -1) {
+    while ((c = getopt(argc, argv, "m:f:cw:h:")) != -1) {
         switch(c) {
             case 'm':
                 maxIter = atoi(optarg);
@@ -94,6 +93,12 @@ int main(int argc, char **argv) {
                 break;
             case 'c':
             	cpu = true;
+            	break;
+            case 'w':
+            	width = atoi(optarg);
+            	break;
+            case 'h':
+            	height = atoi(optarg);
             	break;
         }
     }
