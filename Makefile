@@ -9,7 +9,7 @@ all: mandelbrot info
 %.o: %.cpp *.h
 	${CC} -c -o $@ $<
 
-mandelbrot: main.o opencl.o image.o color.o
+mandelbrot: main.o opencl.o image.o color.o animation.o
 	${CC} -o mandelbrot -F${FRAMEWORK_DIR} -framework OpenCL $^ ${LFLAGS}
 
 info: opencl_info.cpp

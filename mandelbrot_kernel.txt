@@ -1,6 +1,9 @@
 __kernel void mandelbrot(
 	int width,
-	int height,
+	float ratioX,
+	float ratioY,
+	float minX,
+	float minY,
 	int maxIter,
 	__global unsigned int *data) {
 
@@ -8,11 +11,8 @@ __kernel void mandelbrot(
     int x = get_global_id(0) + ((get_global_id(2) % maxY) * get_global_size(0));
     int y = get_global_id(1) + ((get_global_id(2) / maxY) * get_global_size(0));
 
-    float fourw = 4.0 / width;
-    float fourh = 4.0 / height;
-
-	float re = fourw * x - 2.0;
-	float im = fourh * y - 2.0;
+	float re = ratioX * x + minX;
+	float im = ratioY * y + minY;
 
 	unsigned int iter = 0;
 	float x2 = 0;

@@ -7,7 +7,7 @@
 
 #include "color.h"
 
-void runGPU(int width, int height, int maxIter, const char *filename);
+void runGPU(int width, int height, int maxIter, bool animate);
 
 #define NUM_THREADS 1
 
@@ -52,7 +52,7 @@ void *mandelbrot(void *args) {
 	return NULL;
 }
 
-void runCPU(int maxIter, const char *filename) {
+void runCPU(int maxIter) {
 	unsigned int *data = (unsigned int *)malloc(width * height *sizeof(unsigned int));
 	pthread_t threads[NUM_THREADS];
 
@@ -73,23 +73,20 @@ void runCPU(int maxIter, const char *filename) {
 
 	printf("%f\n", elapsed);
 
-	saveImage(filename, width, height, data, maxIter);
+	saveImage("test.png", width, height, data, maxIter);
 	free(data);
 }
 
 int main(int argc, char **argv) {
-    const char *filename = "test.png";
     bool cpu = false;
+    bool animate = false;
 
     int c;
 
-    while ((c = getopt(argc, argv, "m:f:cw:h:")) != -1) {
+    while ((c = getopt(argc, argv, "m:cw:h:a")) != -1) {
         switch(c) {
             case 'm':
                 maxIter = atoi(optarg);
-                break;
-            case 'f':
-                filename = optarg;
                 break;
             case 'c':
             	cpu = true;
@@ -100,13 +97,16 @@ int main(int argc, char **argv) {
             case 'h':
             	height = atoi(optarg);
             	break;
+            case 'a':
+            	animate = true;
+            	break;
         }
     }
 
     if (cpu) {
-    	runCPU(maxIter, filename);
+    	runCPU(maxIter);
     } else {
-    	runGPU(width, height, maxIter, filename);
+    	runGPU(width, height, maxIter, animate);
     }
 
     return 0;

@@ -5,8 +5,11 @@
 #include <math.h>
 
 #include "color.h"
+#include "animation.h"
 
 #define MAX_SOURCE_SIZE (0x100000)
+
+void doRun(int width, int height, int maxIter, float scale, const char *filename);
 
 char *readKernel(size_t &source_size) {
     FILE *fp;
@@ -24,8 +27,22 @@ char *readKernel(size_t &source_size) {
     return source_str;
 }
 
-void runGPU(int width, int height, int maxIter, const char *filename) {
-	cl_uint numPlatforms = 0;
+void runGPU(int width, int height, int maxIter, bool animate) {
+    if (!animate) {
+        doRun(width, height, maxIter, 1, "test.png");
+    } else {
+        Animation a;
+        char filename[32];
+        for (int i = 0; i < a.frames.size(); i++) {
+            sprintf(filename, "./output/frame-%d.png", i);
+            printf("%d %f\n", i, a.frames[i].scale);
+            doRun(width, height, maxIter, a.frames[i].scale, filename);
+        }
+    }
+}
+
+void doRun(int width, int height, int maxIter, float scale, const char *filename) {
+    cl_uint numPlatforms = 0;
 	cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
 
 	cl_platform_id *platforms = (cl_platform_id *) malloc(numPlatforms * sizeof(cl_platform_id));
@@ -48,6 +65,14 @@ void runGPU(int width, int height, int maxIter, const char *filename) {
 
     height = ceil((float) height / dims[1]) * dims[1];
     printf("new height = %d\n", height);
+
+    float ratio = (float) height / width;
+    float minX = -2.f * scale;
+    float minY = minX * ratio;
+    //minX -= 1;
+
+    float ratioX = 4.f / width * scale;
+    float ratioY = 4.f * ratio / height * scale;
 
 	struct timespec start, finish;
 	clock_gettime(CLOCK_MONOTONIC, &start);
@@ -110,7 +135,25 @@ void runGPU(int width, int height, int maxIter, const char *filename) {
         exit(1);
     }
 
-    status = clSetKernelArg(kernel, argID++, sizeof(int), (void *)&height);
+    status = clSetKernelArg(kernel, argID++, sizeof(float), (void *)&ratioX);
+    printf("clSetKernelArg status = %d\n", status);
+    if (status != CL_SUCCESS) {
+        exit(1);
+    }
+
+    status = clSetKernelArg(kernel, argID++, sizeof(float), (void *)&ratioY);
+    printf("clSetKernelArg status = %d\n", status);
+    if (status != CL_SUCCESS) {
+        exit(1);
+    }
+
+    status = clSetKernelArg(kernel, argID++, sizeof(float), (void *)&minX);
+    printf("clSetKernelArg status = %d\n", status);
+    if (status != CL_SUCCESS) {
+        exit(1);
+    }
+
+    status = clSetKernelArg(kernel, argID++, sizeof(float), (void *)&minY);
     printf("clSetKernelArg status = %d\n", status);
     if (status != CL_SUCCESS) {
         exit(1);
@@ -131,8 +174,9 @@ void runGPU(int width, int height, int maxIter, const char *filename) {
     fflush(stdout);
  
     // Execute the OpenCL kernel on the list
-    size_t local_item_size[3] = {16, 16, 1};
-    status = clEnqueueNDRangeKernel(command_queue, kernel, 3, NULL, dims, local_item_size, 0, NULL, NULL);
+    size_t global_item_size[3] = {256, 256, 16};
+    size_t local_item_size[3] = {128, 1, 1};
+    status = clEnqueueNDRangeKernel(command_queue, kernel, 3, NULL, global_item_size, local_item_size, 0, NULL, NULL);
     printf("clEnqueueNDRangeKernel status = %d\n", status);
     if (status != CL_SUCCESS) {
     	exit(1);
