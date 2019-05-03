@@ -23,10 +23,6 @@ Animation::Animation() {
     }
 
     frames.push_back(keyframes[keyframes.size() - 1]);
-
-    for (int i = 0; i < frames.size(); i++) {
-    	printf("%d - %d %f\n", i, frames[i].fnum, frames[i].scale);
-    }
 }
 
 Frame Frame::lerp(const Frame&b, int fnum) {

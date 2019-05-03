@@ -6,10 +6,9 @@
 #include <unistd.h>
 
 #include "color.h"
+#include "opencl.h"
 
-void runGPU(int width, int height, int maxIter, bool animate);
-
-#define NUM_THREADS 1
+#define NUM_THREADS 8
 
 int width = 1000;
 int height = 1000;
@@ -56,22 +55,12 @@ void runCPU(int maxIter) {
 	unsigned int *data = (unsigned int *)malloc(width * height *sizeof(unsigned int));
 	pthread_t threads[NUM_THREADS];
 
-	struct timespec start, finish;
-
-	clock_gettime(CLOCK_MONOTONIC, &start);
-
 	for (int i = 0; i < NUM_THREADS; i++) {
 		pthread_create(&threads[i], NULL, mandelbrot, data);
 	}
 	for (int i = 0; i < NUM_THREADS; i++) {
 		pthread_join(threads[i], NULL);
 	}
-
-	clock_gettime(CLOCK_MONOTONIC, &finish);
-	double elapsed = (finish.tv_sec - start.tv_sec);
-	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
-
-	printf("%f\n", elapsed);
 
 	saveImage("test.png", width, height, data, maxIter);
 	free(data);
@@ -103,11 +92,21 @@ int main(int argc, char **argv) {
         }
     }
 
+	struct timespec start, finish;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+
     if (cpu) {
     	runCPU(maxIter);
     } else {
-    	runGPU(width, height, maxIter, animate);
+    	OpenCL ocl(width, height);
+    	ocl.runGPU(maxIter, animate);
     }
+
+	clock_gettime(CLOCK_MONOTONIC, &finish);
+	double elapsed = (finish.tv_sec - start.tv_sec);
+	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+
+	printf("RUNTIME = %f seconds\n", elapsed);
 
     return 0;
 }
