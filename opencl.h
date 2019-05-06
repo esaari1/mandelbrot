@@ -13,7 +13,7 @@ public:
 
 private:
 	void initialize();
-	void doRun(int maxIter, float scale, float xoffset, const char *filename);
+	void doRun(int maxIter, float scale, float xoffset, float yoffset, const char *filename);
 
 	int width, height;
 	cl_platform_id *platforms;

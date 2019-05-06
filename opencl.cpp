@@ -45,14 +45,14 @@ void OpenCL::runGPU(int maxIter, bool animate) {
     initialize();
 
     if (!animate) {
-        doRun(maxIter, 1, 0, "test.png");
+        doRun(maxIter, 1, 0, 0, "test.png");
     } else {
         Animation a;
         char filename[32];
         for (int i = 0; i < a.frames.size(); i++) {
             sprintf(filename, "./output/frame-%d.png", i);
             printf("Frame %d of %lu\n", (i+1), a.frames.size());
-            doRun(maxIter, a.frames[i].scale, a.frames[i].xoffset, filename);
+            doRun(maxIter, a.frames[i].scale, a.frames[i].xoffset, a.frames[i].yoffset, filename);
         }
     }
 }
@@ -125,11 +125,12 @@ void OpenCL::initialize() {
     free(source_str);
 }
 
-void OpenCL::doRun(int maxIter, float scale, float xoffset, const char *filename) {
+void OpenCL::doRun(int maxIter, float scale, float xoffset, float yoffset, const char *filename) {
     float ratio = (float) height / width;
     float minX = -2.f * scale;
     float minY = minX * ratio;
     minX += xoffset;
+    minY -= yoffset;
 
     float ratioX = 4.f / width * scale;
     float ratioY = 4.f * ratio / height * scale;
