@@ -1,6 +1,7 @@
 #include "animation.h"
 
 #include <stdio.h>
+#include "color.h"
 
 Animation::Animation() {
 	FILE *fp = fopen("frames.txt", "r");
@@ -30,8 +31,8 @@ Frame Frame::lerp(const Frame&b, int fnum) {
 
 	Frame ret;
 	ret.fnum = fnum;
-	ret.scale = this->scale + (b.scale - this->scale) * t;
-	ret.xoffset = this->xoffset + (b.xoffset - this->xoffset) * t;
-	ret.yoffset = this->yoffset + (b.yoffset - this->yoffset) * t;
+	ret.scale = cosineInterpolate(this->scale, b.scale, t); // this->scale + (b.scale - this->scale) * t;
+	ret.xoffset = cosineInterpolate(this->xoffset, b.xoffset, t); // this->xoffset + (b.xoffset - this->xoffset) * t;
+	ret.yoffset = cosineInterpolate(this->yoffset, b.yoffset, t); // this->yoffset + (b.yoffset - this->yoffset) * t;
 	return ret;
 }

@@ -16,7 +16,7 @@ int maxIter = 100;
 int yidx = 0;
 
 void *mandelbrot(void *args) {
-	unsigned int *data = (unsigned int *) args;
+	float *data = (float *) args;
 
 	float fourw = 4.0 / width;
 	float fourh = 4.0 / height;
@@ -52,7 +52,7 @@ void *mandelbrot(void *args) {
 }
 
 void runCPU(int maxIter) {
-	unsigned int *data = (unsigned int *)malloc(width * height *sizeof(unsigned int));
+	float *data = (float *)malloc(width * height *sizeof(float));
 	pthread_t threads[NUM_THREADS];
 
 	for (int i = 0; i < NUM_THREADS; i++) {
@@ -69,10 +69,12 @@ void runCPU(int maxIter) {
 int main(int argc, char **argv) {
     bool cpu = false;
     bool animate = false;
+    int frame;
+    float x, y;
 
     int c;
 
-    while ((c = getopt(argc, argv, "m:cw:h:a")) != -1) {
+    while ((c = getopt(argc, argv, "m:cw:h:af:x:y:")) != -1) {
         switch(c) {
             case 'm':
                 maxIter = atoi(optarg);
@@ -89,6 +91,15 @@ int main(int argc, char **argv) {
             case 'a':
             	animate = true;
             	break;
+            case 'f':
+            	frame = atoi(optarg);
+            	break;
+            case 'x':
+            	x = atof(optarg);
+            	break;
+            case 'y':
+            	y = atof(optarg);
+            	break;
         }
     }
 
@@ -99,7 +110,7 @@ int main(int argc, char **argv) {
     	runCPU(maxIter);
     } else {
     	OpenCL ocl(width, height);
-    	ocl.runGPU(maxIter, animate);
+    	ocl.runGPU(maxIter, animate, frame, x, y);
     }
 
 	clock_gettime(CLOCK_MONOTONIC, &finish);

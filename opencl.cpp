@@ -41,18 +41,26 @@ OpenCL::~OpenCL() {
     free(platforms);
 }
 
-void OpenCL::runGPU(int maxIter, bool animate) {
+void OpenCL::runGPU(int maxIter, bool animate, int frame, float x, float y) {
     initialize();
 
     if (!animate) {
-        doRun(maxIter, 1, 0, 0, "test.png");
+        float scale = 1.0;
+        if (frame > 1) {
+            scale = pow(0.9349, frame-1);
+        }
+        doRun(maxIter, scale, x, y, "test.png");
     } else {
         Animation a;
         char filename[32];
+        float factor = 1.0;
         for (int i = 0; i < a.frames.size(); i++) {
-            sprintf(filename, "./output/frame-%d.png", i);
+            sprintf(filename, "./output/frame-%d.png", (i+1));
             printf("Frame %d of %lu\n", (i+1), a.frames.size());
-            doRun(maxIter, a.frames[i].scale, a.frames[i].xoffset, a.frames[i].yoffset, filename);
+            doRun(maxIter, factor, a.frames[i].xoffset, a.frames[i].yoffset, filename);
+
+            factor *= 0.9349;
+            maxIter *= 2;
         }
     }
 }
@@ -78,7 +86,7 @@ void OpenCL::initialize() {
 
     width = ceil((float) width / dims[0]) * dims[0];
     height = ceil((float) height / dims[1]) * dims[1];
-    const int LIST_SIZE = width * height * sizeof(unsigned int);
+    const int LIST_SIZE = width * height * sizeof(float);
 
     // Create an OpenCL context
     context = clCreateContext( NULL, numDevices, devices, NULL, NULL, &status);
@@ -109,7 +117,6 @@ void OpenCL::initialize() {
 
         printf("Build failure = %d\n", status);
         clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, length, buffer, NULL);
-        printf("%lu\n", length);
         printf("LOG = %s\n", buffer);
         free(buffer);
         exit(1);
@@ -134,10 +141,9 @@ void OpenCL::doRun(int maxIter, float scale, float xoffset, float yoffset, const
 
     float ratioX = 4.f / width * scale;
     float ratioY = 4.f * ratio / height * scale;
+    const int LIST_SIZE = width * height * sizeof(float);
 
-    const int LIST_SIZE = width * height * sizeof(unsigned int);
-
-    unsigned int *data = (unsigned int *)malloc(LIST_SIZE);
+    float *data = (float *)malloc(LIST_SIZE);
 
      // Set the arguments of the kernel
     int argID = 0;

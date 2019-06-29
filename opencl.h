@@ -9,7 +9,7 @@ public:
 	OpenCL(int w, int h);
 	~OpenCL();
 
-	void runGPU(int maxIter, bool animate);
+	void runGPU(int maxIter, bool animate, int frame = 0, float x = 0, float y = 0);
 
 private:
 	void initialize();

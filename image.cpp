@@ -8,7 +8,7 @@ void abort_(const char * s) {
 	exit(1);
 }
 
-void saveImage(const char *filename, int width, int height, unsigned int *data, unsigned int maxIter) {
+void saveImage(const char *filename, int width, int height, float *data, unsigned int maxIter) {
 	HSVMap colorMap;
 
 	int bit_depth = 8;

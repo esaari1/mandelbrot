@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+float cosineInterpolate(float y1, float y2, float mu) {
+   float mu2 = (1.f - cos(mu * M_PI)) / 2.f;
+   return(y1 * (1.f - mu2) + y2 * mu2);
+}
+
 RGB HSV::ToRGB() {
     float c = this->v * this->s;
     float x = c * (1.0 - abs(fmod(this->h / 60.0, 2) - 1));
@@ -37,7 +42,10 @@ RGB HSV::ToRGB() {
 
 HSV HSV::lerp(const HSV& b, float t) {
     HSV ret;
-    ret.h = int(this->h + float(b.h - this->h) * t);
+//    ret.h = int(cosineInterpolate(this->h, b.h, t));
+//    ret.s = cosineInterpolate(this->s, b.s, t);
+//    ret.v = cosineInterpolate(this->v, b.v, t);
+    ret.h = int((float)this->h + float(b.h - this->h) * t);
     ret.s = this->s + (b.s - this->s) * t;
     ret.v = this->v + (b.v - this->v) * t;
     return ret;
@@ -55,10 +63,13 @@ HSVMap::HSVMap() {
 }
 
 HSV HSVMap::lerp(float t) {
-    int idx = (this->colors.size() - 1) * t;
-    if (idx == this->colors.size()-1) {
+    float idx = float(this->colors.size() - 1) * t;
+    if (idx >= this->colors.size()-1) {
         return this->colors[this->colors.size() - 1];
     }
 
-    return this->colors[idx].lerp(this->colors[idx + 1], t);
+    int i = (int) idx;
+    t = idx - i;
+
+    return this->colors[i].lerp(this->colors[i + 1], t);
 }
