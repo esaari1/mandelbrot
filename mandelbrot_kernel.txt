@@ -5,7 +5,7 @@ __kernel void mandelbrot(
 	float minX,
 	float minY,
 	int maxIter,
-	__global unsigned int *data) {
+	__global float *data) {
 
     int maxY = width / get_global_size(0);
     int x = get_global_id(0) + ((get_global_id(2) % maxY) * get_global_size(0));
@@ -14,7 +14,7 @@ __kernel void mandelbrot(
 	float re = ratioX * x + minX;
 	float im = ratioY * y + minY;
 
-	unsigned int iter = 0;
+	float iter = 0;
 	float x2 = 0;
 	float y2 = 0;
 
@@ -23,6 +23,12 @@ __kernel void mandelbrot(
 		y2 = 2 * x2 * y2 + im;
 		x2 = xNew;
 		iter++;
+	}
+
+	if ( iter < maxIter ) {
+		float log_zn = log( x2 * x2 + y2 * y2 ) / 2.0;
+		float nu = log( log_zn / (float) log(2.0f) ) / log(2.0f);
+		iter = iter + 1.0 - nu;
 	}
 
 	data[y * width + x] = iter;

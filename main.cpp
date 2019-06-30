@@ -32,7 +32,7 @@ void *mandelbrot(void *args) {
 		for (int x = 0; x < width; x++) {
 			float re = fourw * x - 2.0;
 
-			int iter = 0;
+			float iter = 0;
 			float x2 = 0;
 			float y2 = 0;
 			float xNew = 0;
@@ -42,6 +42,12 @@ void *mandelbrot(void *args) {
 				y2 = 2*x2*y2 + im;
 				x2 = xNew;
 				iter++;
+			}
+
+			 if ( iter < maxIter ) {
+				float log_zn = log( x2*x2 + y2*y2 ) / 2.0;
+				float nu = log( log_zn / log(2.0) ) / log(2.0);
+				iter = iter + 1.0 - nu;
 			}
 
 			data[y * width + x] = iter;
