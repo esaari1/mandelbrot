@@ -8,11 +8,11 @@ Animation::Animation() {
 	std::vector<Frame> keyframes;
 
 	int fnum;
-	float scale, xoffset, yoffset;
+	float xoffset, yoffset;
 
     while (!feof(fp)) {
-        fscanf(fp, "%d %f %f %f", &fnum, &scale, &xoffset, &yoffset);
-        keyframes.push_back(Frame(fnum, scale, xoffset, yoffset));
+        fscanf(fp, "%d %f %f", &fnum, &xoffset, &yoffset);
+        keyframes.push_back(Frame(fnum, xoffset, yoffset));
     }
     fclose(fp);
 
@@ -31,8 +31,7 @@ Frame Frame::lerp(const Frame&b, int fnum) {
 
 	Frame ret;
 	ret.fnum = fnum;
-	ret.scale = cosineInterpolate(this->scale, b.scale, t); // this->scale + (b.scale - this->scale) * t;
-	ret.xoffset = cosineInterpolate(this->xoffset, b.xoffset, t); // this->xoffset + (b.xoffset - this->xoffset) * t;
-	ret.yoffset = cosineInterpolate(this->yoffset, b.yoffset, t); // this->yoffset + (b.yoffset - this->yoffset) * t;
+	ret.xoffset = /*cosineInterpolate(this->xoffset, b.xoffset, t); */ this->xoffset + (b.xoffset - this->xoffset) * t;
+	ret.yoffset = /*cosineInterpolate(this->yoffset, b.yoffset, t); */ this->yoffset + (b.yoffset - this->yoffset) * t;
 	return ret;
 }

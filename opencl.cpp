@@ -49,18 +49,20 @@ void OpenCL::runGPU(int maxIter, bool animate, int frame, float x, float y) {
         if (frame > 1) {
             scale = pow(0.9349, frame-1);
         }
+        printf("%f\n", scale);
         doRun(maxIter, scale, x, y, "test.png");
     } else {
         Animation a;
         char filename[32];
-        float factor = 1.0;
+        float scale = 1.0;
+
         for (int i = 0; i < a.frames.size(); i++) {
             sprintf(filename, "./output/frame-%d.png", (i+1));
-            printf("Frame %d of %lu\n", (i+1), a.frames.size());
-            doRun(maxIter, factor, a.frames[i].xoffset, a.frames[i].yoffset, filename);
+            printf("Frame %d of %lu %f %f\n", (i+1), a.frames.size(), a.frames[i].xoffset, a.frames[i].yoffset);
+            doRun(maxIter, scale, a.frames[i].xoffset, a.frames[i].yoffset, filename);
 
-            factor *= 0.9349;
-            maxIter *= 2;
+            scale *= 0.9349;
+            //maxIter *= 1.02;
         }
     }
 }
