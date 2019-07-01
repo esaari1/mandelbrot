@@ -14,12 +14,24 @@ int width = 1000;
 int height = 1000;
 int maxIter = 100;
 int yidx = 0;
+float scale = 1.0;
+float xoffset = 0;
+float yoffset = 0;
 
 void *mandelbrot(void *args) {
 	float *data = (float *) args;
 
-	float fourw = 4.0 / width;
-	float fourh = 4.0 / height;
+	float ratio = (float) height / width;
+    float minX = -2.f * scale;
+    float minY = minX * ratio;
+    minX += xoffset;
+    minY -= yoffset;
+
+	// float fourw = 4.0 / width;
+	// float fourh = 4.0 / height;
+
+	float ratioX = 4.f / width * scale;
+    float ratioY = 4.f * ratio / height * scale;
 
 	while (1) {
 		int y = __atomic_fetch_add(&yidx, 1, __ATOMIC_SEQ_CST);
@@ -27,10 +39,12 @@ void *mandelbrot(void *args) {
 			break;
 		}
 
-		float im = fourh * y - 2.0;
+		//float im = fourh * y - 2.0;
+		float im = ratioY * y + minY;
 
 		for (int x = 0; x < width; x++) {
-			float re = fourw * x - 2.0;
+			// float re = fourw * x - 2.0;
+			float re = ratioX * x + minX;
 
 			float iter = 0;
 			float x2 = 0;
@@ -113,6 +127,12 @@ int main(int argc, char **argv) {
 	clock_gettime(CLOCK_MONOTONIC, &start);
 
     if (cpu) {
+    	xoffset = x;
+    	yoffset = y;
+		if (frame > 1) {
+			scale = pow(0.9349, frame-1);
+		}
+
     	runCPU(maxIter);
     } else {
     	OpenCL ocl(width, height);
