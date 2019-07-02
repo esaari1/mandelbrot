@@ -31,7 +31,9 @@ Frame Frame::lerp(const Frame&b, int fnum) {
 
 	Frame ret;
 	ret.fnum = fnum;
-	ret.xoffset = /*cosineInterpolate(this->xoffset, b.xoffset, t); */ this->xoffset + (b.xoffset - this->xoffset) * t;
-	ret.yoffset = /*cosineInterpolate(this->yoffset, b.yoffset, t); */ this->yoffset + (b.yoffset - this->yoffset) * t;
+	// ret.xoffset = cosineInterpolate(this->xoffset, b.xoffset, t); // this->xoffset + (b.xoffset - this->xoffset) * t;
+	// ret.yoffset = cosineInterpolate(this->yoffset, b.yoffset, t); // this->yoffset + (b.yoffset - this->yoffset) * t;
+    ret.xoffset = this->xoffset + (b.xoffset - this->xoffset) * t;
+    ret.yoffset = this->yoffset + (b.yoffset - this->yoffset) * t;
 	return ret;
 }
