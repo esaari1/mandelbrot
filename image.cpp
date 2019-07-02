@@ -8,7 +8,7 @@ void abort_(const char * s) {
 	exit(1);
 }
 
-void saveImage(const char *filename, int width, int height, float *data, unsigned int maxIter) {
+void saveImage(const char *filename, int width, int height, double *data, double maxIter) {
 	HSVMap colorMap;
 
 	int bit_depth = 8;
@@ -60,7 +60,7 @@ void saveImage(const char *filename, int width, int height, float *data, unsigne
 	int x, y;
 	for (y = 0 ; y < height ; y++) {
 		for (x = 0 ; x < width ; x++) {
-			HSV h = colorMap.lerp((float) data[y * width + x] / (float) maxIter);
+			HSV h = colorMap.lerp(data[y * width + x] / maxIter);
 			RGB rgb = h.ToRGB();
 
 			row[x * 3] = rgb.r; // data[y * width + x];

@@ -207,6 +207,6 @@ void OpenCL::doRun(int maxIter, float scale, float xoffset, float yoffset, const
         exit(1);
     }
 
-    saveImage(filename, width, height, data, maxIter);
+    //saveImage(filename, width, height, data, maxIter);
     free(data);
  }

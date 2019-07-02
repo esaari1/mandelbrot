@@ -43,7 +43,7 @@ public:
 	HSV lerp(float t);
 };
 
-void saveImage(const char *filename, int width, int height, float *data, unsigned int maxIter);
+void saveImage(const char *filename, int width, int height, double *data, double maxIter);
 float cosineInterpolate(float y1, float y2, float mu);
 
 #endif
