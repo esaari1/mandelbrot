@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include "color.h"
 
-Animation::Animation() {
-	FILE *fp = fopen("frames.txt", "r");
+Animation::Animation(const char *afile) {
+	FILE *fp = fopen(afile, "r");
 	std::vector<Frame> keyframes;
 
 	int fnum;

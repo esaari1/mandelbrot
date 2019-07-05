@@ -24,7 +24,7 @@ public:
 
 class Animation {
 public:
-	Animation();
+	Animation(const char *afile = "frames.txt");
 	std::vector<Frame> frames;
 };
 

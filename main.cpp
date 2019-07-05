@@ -28,9 +28,6 @@ void *mandelbrot(void *args) {
     minX += xoffset;
     minY -= yoffset;
 
-	// float fourw = 4.0 / width;
-	// float fourh = 4.0 / height;
-
 	double ratioX = 4.0 / width * scale;
     double ratioY = 4.0 * ratio / height * scale;
 
@@ -40,11 +37,9 @@ void *mandelbrot(void *args) {
 			break;
 		}
 
-		//float im = fourh * y - 2.0;
 		double im = ratioY * y + minY;
 
 		for (int x = 0; x < width; x++) {
-			// float re = fourw * x - 2.0;
 			double re = ratioX * x + minX;
 
 			unsigned int iter = 0;
@@ -85,7 +80,7 @@ void cpuImage(const char *fname, double *data) {
 	saveImage(fname, width, height, data, maxIter);
 }
 
-void runCPU(bool animate, int frame, float x, float y) {
+void runCPU(bool animate, const char *afile, int frame, float x, float y) {
 	double *data = (double *)malloc(width * height *sizeof(double));
 
     if (!animate) {
@@ -96,7 +91,7 @@ void runCPU(bool animate, int frame, float x, float y) {
         yoffset = y;
         cpuImage("test.png", data);
     } else {
-        Animation a;
+        Animation a(afile);
         char filename[32];
 
         for (int i = 0; i < a.frames.size(); i++) {
@@ -117,20 +112,21 @@ void runCPU(bool animate, int frame, float x, float y) {
 
 
 int main(int argc, char **argv) {
-    bool cpu = false;
+    bool cpu = true;
     bool animate = false;
     int frame;
     float x, y;
+    const char *afile;
 
     int c;
 
-    while ((c = getopt(argc, argv, "m:cw:h:af:x:y:")) != -1) {
+    while ((c = getopt(argc, argv, "m:gw:h:a:f:x:y:")) != -1) {
         switch(c) {
             case 'm':
                 maxIter = atoi(optarg);
                 break;
-            case 'c':
-            	cpu = true;
+            case 'g':
+            	cpu = false;
             	break;
             case 'w':
             	width = atoi(optarg);
@@ -140,6 +136,7 @@ int main(int argc, char **argv) {
             	break;
             case 'a':
             	animate = true;
+                afile = optarg;
             	break;
             case 'f':
             	frame = atoi(optarg);
@@ -157,7 +154,7 @@ int main(int argc, char **argv) {
 	clock_gettime(CLOCK_MONOTONIC, &start);
 
     if (cpu) {
-    	runCPU(animate, frame, x, y);
+    	runCPU(animate, afile, frame, x, y);
     } else {
     	OpenCL ocl(width, height);
     	ocl.runGPU(maxIter, animate, frame, x, y);
@@ -171,3 +168,5 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+// ./mandelbrot -c -x -0.77568377 -y 0.13646737 -m 3000 -f 320
