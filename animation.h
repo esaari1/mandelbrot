@@ -8,15 +8,17 @@ public:
 	int fnum;
 	float xoffset;
 	float yoffset;
+	int maxIter;
 
 	Frame() {
-		Frame(0, 0, 0);
+		Frame(0, 0, 0, 0);
 	}
 
-	Frame(int f, float x, float y) {
+	Frame(int f, float x, float y, int maxIter) {
 		this->fnum = f;
 		this->xoffset = x;
 		this->yoffset = y;
+		this->maxIter = maxIter;
 	}
 
 	Frame lerp(const Frame&b, int fnum);

@@ -7,12 +7,12 @@ Animation::Animation(const char *afile) {
 	FILE *fp = fopen(afile, "r");
 	std::vector<Frame> keyframes;
 
-	int fnum;
+	int fnum, maxIter;
 	float xoffset, yoffset;
 
     while (!feof(fp)) {
-        fscanf(fp, "%d %f %f", &fnum, &xoffset, &yoffset);
-        keyframes.push_back(Frame(fnum, xoffset, yoffset));
+        fscanf(fp, "%d %f %f %d", &fnum, &xoffset, &yoffset, &maxIter);
+        keyframes.push_back(Frame(fnum, xoffset, yoffset, maxIter));
     }
     fclose(fp);
 
@@ -35,5 +35,6 @@ Frame Frame::lerp(const Frame&b, int fnum) {
 	// ret.yoffset = cosineInterpolate(this->yoffset, b.yoffset, t); // this->yoffset + (b.yoffset - this->yoffset) * t;
     ret.xoffset = this->xoffset + (b.xoffset - this->xoffset) * t;
     ret.yoffset = this->yoffset + (b.yoffset - this->yoffset) * t;
+    ret.maxIter = int(float(this->maxIter) + (float(b.maxIter - this->maxIter) * t));
 	return ret;
 }
