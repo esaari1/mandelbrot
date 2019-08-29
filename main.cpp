@@ -80,7 +80,7 @@ void cpuImage(const char *fname, double *data) {
 	saveImage(fname, width, height, data, maxIter);
 }
 
-void runCPU(bool animate, const char *afile, int frame, float x, float y) {
+void runCPU(bool animate, const char *afile, int frame, double x, double y) {
 	double *data = (double *)malloc(width * height *sizeof(double));
 
     if (!animate) {
@@ -96,9 +96,13 @@ void runCPU(bool animate, const char *afile, int frame, float x, float y) {
 
         for (int i = 0; i < a.frames.size(); i++) {
             sprintf(filename, "./output/frame-%d.png", (i+1));
-            printf("Frame %d of %lu %lf\n", (i+1), a.frames.size(), maxIter);
             xoffset = a.frames[i].xoffset;
             yoffset = a.frames[i].yoffset;
+            if (a.frames[i].maxIter > 0) {
+                maxIter = a.frames[i].maxIter;
+            }
+
+            printf("Frame %d of %lu %lf\n", (i+1), a.frames.size(), maxIter);
             cpuImage(filename, data);
 
             scale *= 0.9349;
@@ -115,7 +119,7 @@ int main(int argc, char **argv) {
     bool cpu = true;
     bool animate = false;
     int frame;
-    float x, y;
+    double x, y;
     const char *afile;
 
     int c;
@@ -145,7 +149,7 @@ int main(int argc, char **argv) {
             	x = atof(optarg);
             	break;
             case 'y':
-            	y = atof(optarg);
+                y = atof(optarg);
             	break;
         }
     }
