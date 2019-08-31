@@ -47,14 +47,14 @@ void *mandelbrot(void *args) {
 			double y2 = 0;
 			double xNew = 0;
 
-			while (((x2*x2 + y2*y2) <= 4) && (iter < maxIter)) {
+			while (((x2*x2 + y2*y2) <= 4.0) && (iter < maxIter)) {
 				xNew = x2*x2 - y2*y2 + re;
 				y2 = 2*x2*y2 + im;
 				x2 = xNew;
 				iter++;
 			}
 
-			 if ( iter < maxIter ) {
+			if ( iter < maxIter ) {
 				double log_zn = log( x2*x2 + y2*y2 ) / 2.0;
 				double nu = log( log_zn / log(2.0) ) / log(2.0);
 				data[y * width + x] = (double) iter + 1.0 - nu;
@@ -81,12 +81,13 @@ void cpuImage(const char *fname, double *data) {
 }
 
 void runCPU(bool animate, const char *afile, int frame, double x, double y) {
-	double *data = (double *)malloc(width * height *sizeof(double));
+	double *data = (double *)malloc(width * height * sizeof(double));
 
     if (!animate) {
         if (frame > 1) {
             scale = pow(0.9349, frame-1);
         }
+
         xoffset = x;
         yoffset = y;
         cpuImage("test.png", data);
@@ -118,9 +119,9 @@ void runCPU(bool animate, const char *afile, int frame, double x, double y) {
 int main(int argc, char **argv) {
     bool cpu = true;
     bool animate = false;
-    int frame;
-    double x, y;
-    const char *afile;
+    int frame = 0;
+    double x = 0, y = 0;
+    const char *afile = 0;
 
     int c;
 
@@ -161,7 +162,7 @@ int main(int argc, char **argv) {
     	runCPU(animate, afile, frame, x, y);
     } else {
     	OpenCL ocl(width, height);
-    	ocl.runGPU(maxIter, animate, frame, x, y);
+    	ocl.runGPU(maxIter, animate, afile, frame, x, y);
     }
 
 	clock_gettime(CLOCK_MONOTONIC, &finish);

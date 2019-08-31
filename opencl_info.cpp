@@ -1,6 +1,14 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifdef __APPLE__
 #include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
+
 
 char *getDeviceParamString(cl_device_id deviceID, int paramID) {
 	size_t paramSize;
@@ -65,16 +73,18 @@ int main() {
 	cl_platform_id *platforms = (cl_platform_id *) malloc(numPlatforms * sizeof(cl_platform_id));
 	clGetPlatformIDs(numPlatforms, platforms, NULL);
 
-	cl_uint numDevices;
-	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
-	printf("%d devices\n", numDevices);
+	for (int p = 0; p < numPlatforms; p++) {
+		cl_uint numDevices;
+		clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices);
+		printf("%d devices\n", numDevices);
 
-	cl_device_id *devices = (cl_device_id *) malloc(numDevices * sizeof(cl_device_id));
-	clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, numDevices, devices, NULL);
+		cl_device_id *devices = (cl_device_id *) malloc(numDevices * sizeof(cl_device_id));
+		clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL, numDevices, devices, NULL);
 
-	for (int i = 0; i < numDevices; i++) {
-		printf("\n");
-		getDeviceInfo(devices[i]);
+		for (int i = 0; i < numDevices; i++) {
+			printf("\n");
+			getDeviceInfo(devices[i]);
+		}
 	}
 
 	return 0;

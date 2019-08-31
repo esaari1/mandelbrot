@@ -1,0 +1,25 @@
+CC=g++
+FRAMEWORK_DIR=c://Program Files//NVIDIA Corporation//Installer2//nvcc_10.1.{4B82CF06-8943-47A5-A22F-737A6C5ED9E0}
+PNG_DIR=C://Program Files (x86)//GnuWin32
+PTHREAD_DIR=C://Program Files (x86)//GnuWin32//Pre-built.2
+
+LDIRS=-L"${FRAMEWORK_DIR}//lib//Win32" -L"${PNG_DIR}//lib" -L"${PTHREAD_DIR}//lib/x86"
+LFLAGS=-lpng -lOpenCL -lpthreadVC2
+IFLAGS=-I"${FRAMEWORK_DIR}//include" -I"${PNG_DIR}//include" -I"${PTHREAD_DIR}//include2"
+
+all: mandelbrot info
+#all: opencl
+
+%.o: %.cpp *.h
+	${CC} ${IFLAGS} -c -o $@ $<
+
+mandelbrot: main.o opencl.o image.o color.o animation.o
+	${CC} ${IFLAGS} -o mandelbrot $^ ${LDIRS} ${LFLAGS}
+
+info: opencl_info.cpp
+	${CC} ${IFLAGS} -o info.exe $^ ${LDIRS} ${LFLAGS}
+
+clean:
+	rm -rf *.o
+	rm -rf mandelbrot.exe
+	rm -rf info.exe
