@@ -1,16 +1,18 @@
 #include <math.h>
+#include <stdio.h>
 
 #include "opencl.h"
 #include "color.h"
 #include "animation.h"
 
 #define MAX_SOURCE_SIZE (0x100000)
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 char *readKernel(size_t &source_size) {
     FILE *fp;
     char *source_str;
- 
-    fp = fopen("mandelbrot_kernel.txt", "r");
+
+    fp = fopen("mandelbrotd_kernel.txt", "r");
     if (!fp) {
         fprintf(stderr, "Failed to load kernel.\n");
         exit(1);
@@ -41,28 +43,32 @@ OpenCL::~OpenCL() {
     free(platforms);
 }
 
-void OpenCL::runGPU(int maxIter, bool animate, int frame, float x, float y) {
+void OpenCL::runGPU(int maxIter, bool animate, const char *afile, int frame, double x, double y) {
     initialize();
 
     if (!animate) {
-        float scale = 1.0;
+        double scale = 1.0;
         if (frame > 1) {
             scale = pow(0.9349, frame-1);
         }
-        printf("%f\n", scale);
+
         doRun(maxIter, scale, x, y, "test.png");
     } else {
-        Animation a;
+        Animation a(afile);
         char filename[32];
-        float scale = 1.0;
+        double scale = 1.0;
 
         for (int i = 0; i < a.frames.size(); i++) {
+            if (a.frames[i].maxIter > 0) {
+                maxIter = a.frames[i].maxIter;
+            }
+
             sprintf(filename, "./output/frame-%d.png", (i+1));
-            printf("Frame %d of %lu %f %f\n", (i+1), a.frames.size(), a.frames[i].xoffset, a.frames[i].yoffset);
+            printf("Frame %d of %lu %d %.15f %.15f\n", (i+1), a.frames.size(), maxIter, a.frames[i].xoffset, a.frames[i].yoffset);
             doRun(maxIter, scale, a.frames[i].xoffset, a.frames[i].yoffset, filename);
 
             scale *= 0.9349;
-            //maxIter *= 1.02;
+            maxIter *= 1.0137;
         }
     }
 }
@@ -75,10 +81,10 @@ void OpenCL::initialize() {
     clGetPlatformIDs(numPlatforms, platforms, NULL);
 
     cl_uint numDevices;
-    clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
+    clGetDeviceIDs(platforms[1], CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
 
     devices = (cl_device_id *) malloc(numDevices * sizeof(cl_device_id));
-    clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
+    clGetDeviceIDs(platforms[1], CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
 
     cl_uint workItemDims;
     clGetDeviceInfo(devices[0], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), &workItemDims, NULL);
@@ -86,16 +92,16 @@ void OpenCL::initialize() {
     size_t *dims = (size_t *) malloc(sizeof(size_t) * workItemDims);
     clGetDeviceInfo(devices[0], CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t) * workItemDims, dims, NULL);
 
-    width = ceil((float) width / dims[0]) * dims[0];
-    height = ceil((float) height / dims[1]) * dims[1];
-    const int LIST_SIZE = width * height * sizeof(float);
+    width = ceil((double) width / dims[0]) * dims[0];
+    height = ceil((double) height / dims[1]) * dims[1];
+    const int LIST_SIZE = width * height * sizeof(double);
 
     // Create an OpenCL context
     context = clCreateContext( NULL, numDevices, devices, NULL, NULL, &status);
- 
+
     // Create a command queue
     command_queue = clCreateCommandQueue(context, devices[0], 0, &status);
- 
+
     // Create memory buffers on the device for data
     data_mem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, LIST_SIZE, NULL, &status);
 
@@ -123,9 +129,9 @@ void OpenCL::initialize() {
         free(buffer);
         exit(1);
     }
- 
+
     // Create the OpenCL kernel
-    kernel = clCreateKernel(program, "mandelbrot", &status);
+    kernel = clCreateKernel(program, "mandelbrotd", &status);
     if (status != CL_SUCCESS) {
         printf("Create kernel failed = %d\n", status);
         exit(1);
@@ -134,18 +140,18 @@ void OpenCL::initialize() {
     free(source_str);
 }
 
-void OpenCL::doRun(int maxIter, float scale, float xoffset, float yoffset, const char *filename) {
-    float ratio = (float) height / width;
-    float minX = -2.f * scale;
-    float minY = minX * ratio;
+void OpenCL::doRun(int maxIter, double scale, double xoffset, double yoffset, const char *filename) {
+    double ratio = (double) height / width;
+    double minX = -2.f * scale;
+    double minY = minX * ratio;
     minX += xoffset;
     minY -= yoffset;
 
-    float ratioX = 4.f / width * scale;
-    float ratioY = 4.f * ratio / height * scale;
-    const int LIST_SIZE = width * height * sizeof(float);
+    double ratioX = 4.f / width * scale;
+    double ratioY = 4.f * ratio / height * scale;
+    const int LIST_SIZE = width * height * sizeof(double);
 
-    float *data = (float *)malloc(LIST_SIZE);
+    double *data = (double *)malloc(LIST_SIZE);
 
      // Set the arguments of the kernel
     int argID = 0;
@@ -155,25 +161,25 @@ void OpenCL::doRun(int maxIter, float scale, float xoffset, float yoffset, const
         exit(1);
     }
 
-    status = clSetKernelArg(kernel, argID++, sizeof(float), (void *)&ratioX);
+    status = clSetKernelArg(kernel, argID++, sizeof(double), (void *)&ratioX);
     if (status != CL_SUCCESS) {
         printf("clSetKernelArg failed = %d\n", status);
         exit(1);
     }
 
-    status = clSetKernelArg(kernel, argID++, sizeof(float), (void *)&ratioY);
+    status = clSetKernelArg(kernel, argID++, sizeof(double), (void *)&ratioY);
     if (status != CL_SUCCESS) {
         printf("clSetKernelArg failed = %d\n", status);
         exit(1);
     }
 
-    status = clSetKernelArg(kernel, argID++, sizeof(float), (void *)&minX);
+    status = clSetKernelArg(kernel, argID++, sizeof(double), (void *)&minX);
     if (status != CL_SUCCESS) {
         printf("clSetKernelArg failed = %d\n", status);
         exit(1);
     }
 
-    status = clSetKernelArg(kernel, argID++, sizeof(float), (void *)&minY);
+    status = clSetKernelArg(kernel, argID++, sizeof(double), (void *)&minY);
     if (status != CL_SUCCESS) {
         printf("clSetKernelArg failed = %d\n", status);
         exit(1);
@@ -192,7 +198,7 @@ void OpenCL::doRun(int maxIter, float scale, float xoffset, float yoffset, const
     }
 
     // Execute the OpenCL kernel on the list
-    size_t global_item_size[3] = {256, 256, 16};
+    size_t global_item_size[3] = {1024, 1024, 1};
     size_t local_item_size[3] = {128, 1, 1};
     status = clEnqueueNDRangeKernel(command_queue, kernel, 3, NULL, global_item_size, local_item_size, 0, NULL, NULL);
     if (status != CL_SUCCESS) {
@@ -207,6 +213,6 @@ void OpenCL::doRun(int maxIter, float scale, float xoffset, float yoffset, const
         exit(1);
     }
 
-    //saveImage(filename, width, height, data, maxIter);
+    saveImage(filename, width, height, data, maxIter);
     free(data);
  }

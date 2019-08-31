@@ -1,7 +1,11 @@
 #ifndef _OPENCL_H
 #define _OPENCL_H
 
+#ifdef __APPLE__
 #include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
 
 class OpenCL {
 
@@ -9,11 +13,11 @@ public:
 	OpenCL(int w, int h);
 	~OpenCL();
 
-	void runGPU(int maxIter, bool animate, int frame = 0, float x = 0, float y = 0);
+	void runGPU(int maxIter, bool animate, const char *afile, int frame = 0, double x = 0, double y = 0);
 
 private:
 	void initialize();
-	void doRun(int maxIter, float scale, float xoffset, float yoffset, const char *filename);
+	void doRun(int maxIter, double scale, double xoffset, double yoffset, const char *filename);
 
 	int width, height;
 	cl_platform_id *platforms;
