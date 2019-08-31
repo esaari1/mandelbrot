@@ -8,10 +8,10 @@ Animation::Animation(const char *afile) {
 	std::vector<Frame> keyframes;
 
 	int fnum, maxIter;
-	float xoffset, yoffset;
+	double xoffset, yoffset;
 
     while (!feof(fp)) {
-        fscanf(fp, "%d %f %f %d", &fnum, &xoffset, &yoffset, &maxIter);
+        fscanf(fp, "%d %lf %lf %d", &fnum, &xoffset, &yoffset, &maxIter);
         keyframes.push_back(Frame(fnum, xoffset, yoffset, maxIter));
     }
     fclose(fp);
@@ -27,7 +27,7 @@ Animation::Animation(const char *afile) {
 }
 
 Frame Frame::lerp(const Frame&b, int fnum) {
-	float t = float(fnum - this->fnum) / float(b.fnum - this->fnum);
+	double t = double(fnum - this->fnum) / double(b.fnum - this->fnum);
 
 	Frame ret;
 	ret.fnum = fnum;
@@ -35,6 +35,6 @@ Frame Frame::lerp(const Frame&b, int fnum) {
 	// ret.yoffset = cosineInterpolate(this->yoffset, b.yoffset, t); // this->yoffset + (b.yoffset - this->yoffset) * t;
     ret.xoffset = this->xoffset + (b.xoffset - this->xoffset) * t;
     ret.yoffset = this->yoffset + (b.yoffset - this->yoffset) * t;
-    ret.maxIter = int(float(this->maxIter) + (float(b.maxIter - this->maxIter) * t));
+    ret.maxIter = int(double(this->maxIter) + (double(b.maxIter - this->maxIter) * t));
 	return ret;
 }

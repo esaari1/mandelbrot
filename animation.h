@@ -6,15 +6,15 @@
 class Frame {
 public:
 	int fnum;
-	float xoffset;
-	float yoffset;
+	double xoffset;
+	double yoffset;
 	int maxIter;
 
 	Frame() {
 		Frame(0, 0, 0, 0);
 	}
 
-	Frame(int f, float x, float y, int maxIter) {
+	Frame(int f, double x, double y, int maxIter) {
 		this->fnum = f;
 		this->xoffset = x;
 		this->yoffset = y;
