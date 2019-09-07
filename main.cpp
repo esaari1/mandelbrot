@@ -80,7 +80,7 @@ void cpuImage(const char *fname, double *data) {
 	saveImage(fname, width, height, data, maxIter);
 }
 
-void runCPU(bool animate, const char *afile, int frame, double x, double y) {
+void runCPU(bool animate, const char *afile, int frame, const char *outputDir, double x, double y) {
 	double *data = (double *)malloc(width * height * sizeof(double));
 
     if (!animate) {
@@ -96,7 +96,7 @@ void runCPU(bool animate, const char *afile, int frame, double x, double y) {
         char filename[32];
 
         for (int i = 0; i < a.frames.size(); i++) {
-            sprintf(filename, "./output/frame-%d.png", (i+1));
+            sprintf(filename, "./%s/frame-%d.png", outputDir, (i+1));
             xoffset = a.frames[i].xoffset;
             yoffset = a.frames[i].yoffset;
             if (a.frames[i].maxIter > 0) {
@@ -108,24 +108,36 @@ void runCPU(bool animate, const char *afile, int frame, double x, double y) {
 
             scale *= 0.9349;
             yidx = 0;
-            maxIter *= 1.0137;
+            //maxIter *= 1.0137;
+            maxIter *= 1.015;
         }
     }
 
     free(data);
 }
 
-
+/*
+-m <max iter>
+-g - run GPU
+-w <width>
+-h <height>
+-a <animation file>
+-f <frame number>
+-x <x center>
+-y <y center>
+-o <output dir>
+*/
 int main(int argc, char **argv) {
     bool cpu = true;
     bool animate = false;
     int frame = 0;
     double x = 0, y = 0;
     const char *afile = 0;
+    const char *outputDir = "output";
 
     int c;
 
-    while ((c = getopt(argc, argv, "m:gw:h:a:f:x:y:")) != -1) {
+    while ((c = getopt(argc, argv, "m:gw:h:a:f:x:y:o:")) != -1) {
         switch(c) {
             case 'm':
                 maxIter = atoi(optarg);
@@ -152,6 +164,9 @@ int main(int argc, char **argv) {
             case 'y':
                 y = atof(optarg);
             	break;
+            case 'o':
+                outputDir = optarg;
+                break;
         }
     }
 
@@ -159,7 +174,7 @@ int main(int argc, char **argv) {
 	clock_gettime(CLOCK_MONOTONIC, &start);
 
     if (cpu) {
-    	runCPU(animate, afile, frame, x, y);
+    	runCPU(animate, afile, frame, outputDir, x, y);
     } else {
     	OpenCL ocl(width, height);
     	ocl.runGPU(maxIter, animate, afile, frame, x, y);
