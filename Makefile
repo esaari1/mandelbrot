@@ -9,13 +9,17 @@ all: mandelbrot info
 %.o: %.cpp *.h
 	${CC} -c -o $@ $<
 
-mandelbrot: main.o opencl.o image.o color.o animation.o
+mandelbrot: main.o opencl.o image.o color.o animation.o spline.o
 	${CC} -o mandelbrot -F${FRAMEWORK_DIR} -framework OpenCL $^ ${LFLAGS}
 
 info: opencl_info.cpp
 	${CC} -o info -F${FRAMEWORK_DIR} -framework OpenCL $^
 
+spline: spline.cpp
+	${CC} -o spline $^
+
 clean:
 	rm -rf *.o
 	rm -rf mandelbrot
 	rm -rf info
+	rm -rf spline

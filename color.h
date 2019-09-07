@@ -2,6 +2,7 @@
 #define _COLOR_H
 
 #include <vector>
+#include "spline.h"
 
 typedef struct RGB {
 	int r;
@@ -45,5 +46,15 @@ public:
 
 void saveImage(const char *filename, int width, int height, double *data, double maxIter);
 float cosineInterpolate(float y1, float y2, float mu);
+
+class Spline {
+	tk::spline redSpline;
+	tk::spline greenSpline;
+	tk::spline blueSpline;
+
+public:
+	Spline();
+	RGB spline(float t);
+};
 
 #endif

@@ -9,7 +9,8 @@ void abort_(const char * s) {
 }
 
 void saveImage(const char *filename, int width, int height, double *data, double maxIter) {
-	HSVMap colorMap;
+	// HSVMap colorMap;
+	Spline spline;
 
 	int bit_depth = 8;
 	int color_type = PNG_COLOR_TYPE_RGB;
@@ -60,8 +61,9 @@ void saveImage(const char *filename, int width, int height, double *data, double
 	int x, y;
 	for (y = 0 ; y < height ; y++) {
 		for (x = 0 ; x < width ; x++) {
-			HSV h = colorMap.lerp(data[y * width + x] / maxIter);
-			RGB rgb = h.ToRGB();
+			// HSV h = colorMap.lerp(data[y * width + x] / maxIter);
+			// RGB rgb = h.ToRGB();
+			RGB rgb = spline.spline(data[y * width + x] / maxIter);
 
 			row[x * 3] = rgb.r; // data[y * width + x];
 			row[x * 3 + 1] = rgb.g; // data[y * width + x];
