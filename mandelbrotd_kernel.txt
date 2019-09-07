@@ -33,5 +33,4 @@ __kernel void mandelbrotd(
 	else {
 		data[y * width + x] = iter;
 	}
-	data[y * width + x] = iter;
 }
