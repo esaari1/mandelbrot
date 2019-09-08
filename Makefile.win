@@ -13,7 +13,7 @@ all: mandelbrot info
 %.o: %.cpp *.h
 	${CC} ${IFLAGS} -c -o $@ $<
 
-mandelbrot: main.o opencl.o image.o color.o animation.o
+mandelbrot: main.o opencl.o image.o color.o animation.o spline.o
 	${CC} ${IFLAGS} -o mandelbrot $^ ${LDIRS} ${LFLAGS}
 
 info: opencl_info.cpp
