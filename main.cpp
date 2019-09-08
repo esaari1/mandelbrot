@@ -13,7 +13,7 @@
 
 int width = 1000;
 int height = 1000;
-double maxIter = 100;
+int maxIter = 100;
 int yidx = 0;
 double scale = 1.0;
 double xoffset = 0;
@@ -99,17 +99,19 @@ void runCPU(bool animate, const char *afile, int frame, const char *outputDir, d
             sprintf(filename, "./%s/frame-%d.png", outputDir, (i+1));
             xoffset = a.frames[i].xoffset;
             yoffset = a.frames[i].yoffset;
-            if (a.frames[i].maxIter > 0) {
-                maxIter = a.frames[i].maxIter;
-            }
+//            if (a.frames[i].maxIter > 0) {
+//                maxIter = a.frames[i].maxIter;
+//            }
 
-            printf("Frame %d of %lu %lf\n", (i+1), a.frames.size(), maxIter);
-            cpuImage(filename, data);
+			if (frame == 0 || i >= frame) {
+	            printf("Frame %d of %lu %lf\n", (i+1), a.frames.size(), maxIter);
+	            cpuImage(filename, data);
+			}
 
             scale *= 0.9349;
+            maxIter *= 1.017;
             yidx = 0;
             //maxIter *= 1.0137;
-            maxIter *= 1.015;
         }
     }
 
@@ -177,7 +179,7 @@ int main(int argc, char **argv) {
     	runCPU(animate, afile, frame, outputDir, x, y);
     } else {
     	OpenCL ocl(width, height);
-    	ocl.runGPU(maxIter, animate, afile, frame, x, y);
+    	ocl.runGPU(maxIter, animate, afile, frame, outputDir, x, y);
     }
 
 	clock_gettime(CLOCK_MONOTONIC, &finish);
