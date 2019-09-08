@@ -31,6 +31,6 @@ __kernel void mandelbrotd(
 		data[y * width + x] = (double) iter + 1.0 - nu;
 	}
 	else {
-		data[y * width + x] = iter;
+		data[y * width + x] = maxIter;
 	}
 }

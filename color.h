@@ -54,7 +54,7 @@ class Spline {
 
 public:
 	Spline();
-	RGB spline(float t);
+	RGB spline(double t);
 };
 
 #endif

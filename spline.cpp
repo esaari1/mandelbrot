@@ -15,7 +15,7 @@ Spline::Spline() {
 	blueSpline.set_points(x, b);
 }
 
-RGB Spline::spline(float t) {
+RGB Spline::spline(double t) {
 	RGB rgb;
 	rgb.r = fmin(redSpline(t), 255);
 	rgb.g = fmin(greenSpline(t), 255);

@@ -43,7 +43,7 @@ OpenCL::~OpenCL() {
     free(platforms);
 }
 
-void OpenCL::runGPU(int maxIter, bool animate, const char *afile, int frame, double x, double y) {
+void OpenCL::runGPU(int maxIter, bool animate, const char *afile, int frame, const char *outputDir, double x, double y) {
     initialize();
 
     if (!animate) {
@@ -59,16 +59,20 @@ void OpenCL::runGPU(int maxIter, bool animate, const char *afile, int frame, dou
         double scale = 1.0;
 
         for (int i = 0; i < a.frames.size(); i++) {
-            if (a.frames[i].maxIter > 0) {
-                maxIter = a.frames[i].maxIter;
-            }
+//            if (a.frames[i].maxIter > 0) {
+//                maxIter = a.frames[i].maxIter;
+//            }
 
-            sprintf(filename, "./output/frame-%d.png", (i+1));
-            printf("Frame %d of %lu %d %.15f %.15f\n", (i+1), a.frames.size(), maxIter, a.frames[i].xoffset, a.frames[i].yoffset);
-            doRun(maxIter, scale, a.frames[i].xoffset, a.frames[i].yoffset, filename);
+			if (frame == 0 || i >= frame) {
+	            sprintf(filename, "./%s/frame-%d.png", outputDir, (i+1));
+	            printf("Frame %d of %lu %d\n", (i+1), a.frames.size(), maxIter);
+	            doRun(maxIter, scale, a.frames[i].xoffset, a.frames[i].yoffset, filename);
+			}
 
             scale *= 0.9349;
-            maxIter *= 1.0137;
+            maxIter *= 1.017;
+//			scale *= 0.95;
+//            maxIter *= 1.015;
         }
     }
 }
@@ -98,12 +102,24 @@ void OpenCL::initialize() {
 
     // Create an OpenCL context
     context = clCreateContext( NULL, numDevices, devices, NULL, NULL, &status);
+    if (status != CL_SUCCESS) {
+        printf("clCreateContext failed = %d\n", status);
+        exit(1);
+    }
 
     // Create a command queue
     command_queue = clCreateCommandQueue(context, devices[0], 0, &status);
+    if (status != CL_SUCCESS) {
+        printf("clCreateCommandQueue failed = %d\n", status);
+        exit(1);
+    }
 
     // Create memory buffers on the device for data
     data_mem = clCreateBuffer(context, CL_MEM_WRITE_ONLY, LIST_SIZE, NULL, &status);
+    if (status != CL_SUCCESS) {
+        printf("clCreateBuffer failed = %d\n", status);
+        exit(1);
+    }
 
     // Load the kernel source code into the array source_str
     size_t source_size;
@@ -198,16 +214,18 @@ void OpenCL::doRun(int maxIter, double scale, double xoffset, double yoffset, co
     }
 
     // Execute the OpenCL kernel on the list
-    size_t global_item_size[3] = {1024, 1024, 1};
+    size_t global_item_size[3] = {1024, 1024, 2};
     size_t local_item_size[3] = {128, 1, 1};
-    status = clEnqueueNDRangeKernel(command_queue, kernel, 3, NULL, global_item_size, local_item_size, 0, NULL, NULL);
+    cl_event event;
+
+    status = clEnqueueNDRangeKernel(command_queue, kernel, 3, NULL, global_item_size, local_item_size, 0, NULL, &event);
     if (status != CL_SUCCESS) {
         printf("clEnqueueNDRangeKernel failed = %d\n", status);
     	exit(1);
     }
 
     // Read the memory buffer C on the device to the local variable C
-	status = clEnqueueReadBuffer(command_queue, data_mem, CL_TRUE, 0, LIST_SIZE, data, 0, NULL, NULL);
+	status = clEnqueueReadBuffer(command_queue, data_mem, CL_TRUE, 0, LIST_SIZE, data, 1, &event, NULL);
     if (status != CL_SUCCESS) {
     	printf("clEnqueueReadBuffer failed = %d\n", status);
         exit(1);

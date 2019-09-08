@@ -13,7 +13,7 @@ public:
 	OpenCL(int w, int h);
 	~OpenCL();
 
-	void runGPU(int maxIter, bool animate, const char *afile, int frame = 0, double x = 0, double y = 0);
+	void runGPU(int maxIter, bool animate, const char *afile, int frame = 0, const char *outputDir = "output", double x = 0, double y = 0);
 
 private:
 	void initialize();
